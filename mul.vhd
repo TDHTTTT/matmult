@@ -1,3 +1,11 @@
+----------------------------------------------------------------------
+-- EECS31L/CSE31L Assignment4 DCT - v2
+-- Structural Model
+-- Author: 
+-- ucinetid: 
+----------------------------------------------------------------------
+-- Version 2-22-2018
+
 Library IEEE;
 use IEEE.STD_LOGIC_1164.all;
 use IEEE.STD_LOGIC_MISC.all;
@@ -378,11 +386,15 @@ begin
            end process StateReg;
  
  CombLogic: process(CurrState, Start, Count)
+            -- some suggested variables, you can use or you can remove.
+            -- variable  NextStateValue : STATE_VALUE := <initialize your state here>;
             variable  VarDone : std_logic;
             variable  i, j, k : INTEGER;
            
         begin
            
+            -- convert from our Count std_logic_vector into an integer we can use easier
+            -- optional to use; you can add/remove whatever code you feel necessary for the Controller
             if( Count(0) /= 'U' and Start /= 'U' ) then
                 i := CONV_INTEGER( unsigned(Count( 8 downto 6 )) );
                 j := CONV_INTEGER( unsigned(Count( 5 downto 3 )) );
@@ -395,8 +407,6 @@ begin
                 -- Wait until start is 1
                 Rst_counter <= '0';
                 Done <= '0';
-                Sel4 <= '0';
-                Sel5 <= '0';
                 if (Start='1') then
                     Nextstate <= S_1 after DELAY;
                 else
@@ -410,10 +420,8 @@ begin
                 R_en2 <= '0';
                 W_en <= '1';
                 Sel1 <= '0';
---                Sel6 <= '1';
---                Sel7 <= '0';
-                Sel4 <= '0';
-                Sel5 <= '0';
+
+                Sel3 <= '0';
                 
                 if (i=1) then
                     Rst_counter <= '1' after DELAY;
@@ -430,18 +438,15 @@ begin
                 R_en2 <= '1';
                 W_en <= '1';
                 Sel1 <= '1';
---                Sel6 <= '0';
---                Sel7 <= '1';
-                -- 2,3 determines which comes first in multiplication
+              
                 Sel2 <= '0';
                 Sel3 <= '1';
-                -- 4,5 determines first two bits w_addr
-                Sel4 <= '0';
-                Sel5 <= '1';
-                
+                Sel5 <= '0';
                 Sel6 <= '0';
+
+                Rst_sum <= '0';
                 if (k=7) then
-                    Sel6 <= '1';
+                    Rst_sum <= '1';
                 end if;
                 
                 if (i=7 and j=7 and k=7) then
@@ -459,19 +464,17 @@ begin
                 R_en2 <= '1';
                 W_en <= '1';
                 Sel1 <= '1';
---                Sel6 <= '0';
---                Sel7 <= '0';
 
-                Sel2 <= '0';
+                Sel2 <= '1';
                 Sel3 <= '1';
+                Sel4 <= '0';
+                Sel5 <= '1';
+                Sel6 <= '1';
                 
-                Sel4 <= '1';
-                Sel5 <= '0';
                 
-                Sel6 <= '0';
-                
+                Rst_sum <= '0';
                 if (k=7) then
-                    Sel6 <= '1';
+                    Rst_sum <= '1';
                 end if;
                                 
                 if (i=7 and j=7 and k=7) then
@@ -489,13 +492,13 @@ begin
                 R_en2 <= '0';
                 W_en <= '0';
                 Sel1 <= '0';
---                Sel6 <= '1';
---                Sel7 <= '0';
+
                 Sel4 <= '1';
                 Sel5 <= '1';
-                
+               
+
                 -- For outreg and buff
-                Sel6 <= '1';
+                LoadSum <= '1';
                 Oe <= '1';
                 
                 
@@ -525,7 +528,6 @@ Library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.std_logic_misc.all;
 use IEEE.std_logic_arith.all;
-
 
 Entity DCT_str IS
       Port (
@@ -629,7 +631,7 @@ SIGNAL Inc, Rst_counter, Rst_sum, Rst_p:std_logic;
 SIGNAL R_en1_s, R_en2_s :std_logic;
 SIGNAL W_en_s :std_logic;
 SIGNAL Sel1_s, Sel2_s,Sel3_s,Sel4_s,Sel5_s,Sel6_s,Sel7_s:std_logic;
-SIGNAL muxout1,muxout2,muxout3: std_logic_vector(2 downto 0);
+SIGNAL muxout1,muxout2,muxout3: INTEGER;
 SIGNAL muxout4, muxout5, muxout6: INTEGER;
 SIGNAL mult_out: INTEGER;
 SIGNAL add_out: INTEGER;
@@ -644,55 +646,72 @@ SIGNAL R_addr1s: std_logic_vector(7 downto 0);
 SIGNAL R_addr2s: std_logic_vector(7 downto 0);
 SIGNAL W_addrs: std_logic_vector(7 downto 0);
 
-SIGNAL Result1: INTEGER;
-SIGNAL Result2: INTEGER;
+SIGNAL W_addr_sa: INTEGER;
+SIGNAL W_addr_sb: INTEGER;
+SIGNAL W_addr_sc: INTEGER;
+SIGNAL R_addr_s1a: INTEGER;
+SIGNAL R_addr_s1b: INTEGER;
+SIGNAL R_addr_s1c: INTEGER;
+SIGNAL R_addr_s2a: INTEGER;
+SIGNAL R_addr_s2b: INTEGER;
 
-type ADDR is array (0 to 3) of STD_LOGIC_VECTOR(7 downto 0);
-signal W_addr_s : ADDR :=("00000000","00000000","00000000","00000000");
-signal R_addr_s1 : ADDR :=("00000000","00000000","00000000","00000000");
-signal R_addr_s2 : ADDR :=("00000000","00000000","00000000","00000000");
+--SIGNAL W_addr_saa: std_logic_vector(7 downto 0);
+--SIGNAL W_addr_sbb: std_logic_vector(7 downto 0);
+--SIGNAL W_addr_scc: std_logic_vector(7 downto 0);
+--SIGNAL R_addr_s1aa: std_logic_vector(7 downto 0);
+--SIGNAL R_addr_s1bb: std_logic_vector(7 downto 0);
+--SIGNAL R_addr_s1cc: std_logic_vector(7 downto 0);
+--SIGNAL R_addr_s2aa: std_logic_vector(7 downto 0);
+--SIGNAL R_addr_s2bb: std_logic_vector(7 downto 0);
 
-signal addrloc: std_logic_vector(1 downto 0);
 
 Begin
 
     count_s <= i_s&j_s&k_s;
-    -- During S_1 (input)
-    -- muxout1 = j; muxout2 = k;
     
-    -- During S_2 (first multiplication)
-    -- muxout1 = i; muxout2 = j; muxout3 = k
     
-    -- During S_3  (second multiplication)
-    -- muxout1 = ; muxout2 = ; muxout3 = 
-     
-    -- During S_4 (output)
-    -- muxout1 = j; muxout2 = k;
-    
-    addrloc <= sel4_s&sel5_s; 
-    
-    W_addr_s <= ("10"&j_s&k_s,"01"&i_s&j_s,"00"&i_s&j_s,"00000000");
-    R_addr_s1 <= ("00000000","11"&i_s&k_s,"01"&i_s&k_s,"00"&j_s&k_s);
-    R_addr_s2 <= ("00000000","10"&k_s&j_s,"11"&j_s&k_s,"00000000");
-    
-    W_addrs <= W_addr_s(CONV_INTEGER(unsigned(addrloc)));
-    R_addr1s <= R_addr_s1(CONV_INTEGER(unsigned(addrloc)));
-    R_addr2s <= R_addr_s2(CONV_INTEGER(unsigned(addrloc)));
-    
+    W_addr_sa <= CONV_INTEGER(unsigned("10"&j_s&k_s));
+    W_addr_sb <= CONV_INTEGER(unsigned("01"&i_s&j_s));
+    W_addr_sc <= CONV_INTEGER(unsigned( "00"&i_s&j_s));
+    R_addr_s1a <= CONV_INTEGER(unsigned( "11"&i_s&k_s));
+    R_addr_s1b <= CONV_INTEGER(unsigned( "01"&i_s&k_s));
+    R_addr_s1c <= CONV_INTEGER(unsigned( "00"&j_s&k_s));
+    R_addr_s2a <= CONV_INTEGER(unsigned( "10"&k_s&j_s));
+    R_addr_s2b <= CONV_INTEGER(unsigned( "11"&j_s&k_s));
+
+    W_addrs <= conv_std_logic_vector(muxout3, 8);
+    R_addr1s <= conv_std_logic_vector(muxout5, 8);
+    R_addr2s <= conv_std_logic_vector(muxout6, 8);
     
     MuxIntb: MuxInt port map(
-    C => Sel2_s, D0 => R_data1_out, D1 => R_data2_out, 
-    Dout => muxout5
+    C => Sel2_s, D0 => W_addr_sb, D1 => W_addr_sc,
+    Dout => muxout2
     );
     
     MuxIntc: MuxInt port map(
-    C => Sel3_s, D0 => R_data1_out, D1 => R_data2_out, 
-    Dout => muxout6 
-    );    
+    C => Sel3_s, D0 => W_addr_sa, D1 => muxout2,
+    Dout => muxout3
+    );
+
+    MuxIntd: MuxInt port map(
+    C => Sel4_s, D0 => R_addr_s1b, D1 => R_addr_s1c,
+    Dout => muxout4
+    );
+    
+    MuxInte: MuxInt port map(
+    C => Sel5_s, D0 => R_addr_s1a, D1 => muxout4,
+    Dout => muxout5
+    );
+    
+    MuxIntf: MuxInt port map(
+    C => Sel6_s, D0 => R_addr_s2a, D1 => R_addr_s2b,
+    Dout => muxout6
+    );
+
     
     
     Multipliera: Multiplier port map(
-    A => muxout5, B=> muxout6,
+    A => R_data1_out, B=> R_data2_out,
     Product => mult_out
     );
     
@@ -703,15 +722,14 @@ Begin
     );
     
     Regb: Reg port map(
-    Clk => Clk, DIN => add_out, Rst => Sel6_s,
+    Clk => Clk, DIN => add_out, Rst => Rst_sum,
     Ld => '1', Dout => reg_b_out
     );
  
     MuxInta: MuxInt port map(
     C => Sel1_s, D0 => Din, D1 => add_out, 
-    Dout => muxout4
+    Dout => muxout1
     );
-    
             
     Control: Controller port map(
     Clk => Clk, Start => Start,
@@ -732,16 +750,17 @@ Begin
     R_addr1 => R_addr1s, R_addr2 => R_addr2s, W_addr => W_addrs,
     R_en1 => R_en1_s, R_en2 => R_en2_s, W_en => W_en_s,
     R_data1 => R_data1_out, R_data2 => R_data2_out,
-    W_data => muxout4, Clk => Clk);
+    W_data => muxout1, Clk => Clk);
     
     Rega: Reg port map(
     Clk => Clk, DIN => R_data1_out, Rst => '0',
-    Ld => Sel6_s, Dout => reg_a_out
+    Ld => LoadSum, Dout => reg_a_out
     );
     
     Buffa: ThreeStateBuff port map(
     Control_Input => Oe_s, Data_Input => reg_a_out, Output => Dout);
     
+
 
 End struct;
  
